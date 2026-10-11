@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<!-- Ether Wand v3 -->
+<!-- Ether Wand v4 -->
 <meta name="theme-color" content="#faf6f0">
 <title>Ether Wand</title>
 <style>
@@ -36,14 +36,15 @@ h1{font-family:var(--display);font-weight:800;font-size:clamp(1.25rem,6vw,1.9rem
 .note small{font-size:.42em;color:var(--dim);margin-left:2px}
 .meters{display:flex;flex-direction:column;gap:6px;flex:1;max-width:200px;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .hz{font-size:1rem;color:var(--amber);text-align:right;font-variant-numeric:tabular-nums;letter-spacing:0}
-.meter{display:grid;grid-template-columns:4.2em 1fr;align-items:center;gap:8px}
+.meter{display:grid;grid-template-columns:6.2em 1fr;align-items:center;gap:8px}
 .bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--ember))}
-.scope{position:relative;flex:1 0 150px;border:1px solid var(--line);border-radius:14px;background:
+.scope{position:relative;flex:1 0 220px;border:1px solid var(--line);border-radius:14px;background:
   radial-gradient(120% 80% at 50% 100%,var(--glow) 0%,var(--panel) 60%);overflow:hidden;touch-action:none}
 canvas{position:absolute;inset:0;width:100%;height:100%}
-.hint{position:absolute;left:12px;right:12px;bottom:10px;font-size:.72rem;color:var(--dim);line-height:1.45;pointer-events:none}
-.axes{position:absolute;top:10px;left:12px;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none}
+.hint{position:absolute;left:10px;right:44px;bottom:10px;font-size:.72rem;color:var(--dim);line-height:1.45;pointer-events:none;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.axes{position:absolute;top:10px;left:12px;right:44px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);pointer-events:none}
 .row{display:flex;gap:8px;flex-wrap:wrap}
 .seg{display:flex;flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
 .seg button{flex:1;min-width:0;background:transparent;color:var(--dim);border:0;font:600 .72rem var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:11px 4px;cursor:pointer}
@@ -56,8 +57,11 @@ canvas{position:absolute;inset:0;width:100%;height:100%}
   padding:14px;border-radius:14px;border:0;cursor:pointer;color:var(--power-ink);background:linear-gradient(180deg,var(--power-a),var(--power-b))}
 .power.on{background:var(--panel);color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
 .fxbtn{border-radius:14px;padding:0 18px}
-.fx{display:none;grid-template-columns:1fr 1fr;gap:6px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px 14px}
-.fx.open{display:grid}
+.fx{display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px 14px}
+.pane{display:flex;flex-direction:column;gap:16px}
+.pane[hidden]{display:none}
+.dhead{gap:10px}
+.dhead .seg{flex:0 1 220px}
 .fx .seg{grid-column:1/-1;margin-top:4px}
 .knob{display:flex;flex-direction:column;font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
 .knob span{display:flex;justify-content:space-between}
@@ -106,7 +110,24 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" aria-label="Menu">
-  <div class="dhead"><h2>Demo</h2><button class="btn sm" id="closeMenu">Close</button></div>
+  <div class="dhead">
+    <div class="seg" id="tabSeg" role="group" aria-label="Menu section">
+      <button data-t="demo" aria-pressed="true">Demo</button>
+      <button data-t="fx" aria-pressed="false">Effects</button>
+    </div>
+    <button class="btn sm" id="closeMenu">Close</button>
+  </div>
+  <div class="pane" id="paneFx" hidden>
+  <div class="fx" id="fx" role="group" aria-label="Effects">
+    <div class="seg" id="presetSeg" role="group" aria-label="Presets">
+      <button data-p="clean">Clean</button>
+      <button data-p="classic">Classic</button>
+      <button data-p="space">Space</button>
+      <button data-p="fuzz">Fuzz</button>
+    </div>
+  </div>
+  </div>
+  <div class="pane" id="paneDemo">
   <button class="power" id="demoBtn">Start demo</button>
   <div>
     <p class="sect">Tempo</p>
@@ -128,6 +149,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   <div>
     <p class="sect">Routines</p>
     <div class="routines" id="routines"></div>
+  </div>
   </div>
 </aside>
 
@@ -155,7 +177,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
 
   <div class="scope" id="pad">
     <canvas id="cv"></canvas>
-    <div class="axes" id="axes">Y tilt: pitch · X roll: volume · shake: vibrato</div>
+    <div class="axes" id="axes">Tilt pitch · roll volume · shake vibrato</div>
     <div class="demoTag" id="demoTag"><span class="beats" id="beats"><i></i><i></i><i></i><i></i></span><span id="demoText"></span></div>
     <div class="hint" id="hint">Tap Play, then tilt the top of the phone toward you to drop the pitch and away to raise it. Roll right for louder, left to fade out. Shake for vibrato.</div>
   </div>
@@ -177,17 +199,9 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
     <button class="btn" id="invert" style="flex:1" aria-pressed="false">Flip pitch</button>
     <button class="btn" id="modeBtn" style="flex:1">Use touch</button>
   </div>
-  <div class="fx" id="fx" role="group" aria-label="Effects">
-    <div class="seg" id="presetSeg" role="group" aria-label="Presets">
-      <button data-p="clean">Clean</button>
-      <button data-p="classic">Classic</button>
-      <button data-p="space">Space</button>
-      <button data-p="fuzz">Fuzz</button>
-    </div>
-  </div>
   <div class="row play">
     <button class="power" id="power">Play</button>
-    <button class="btn fxbtn" id="fxBtn" aria-pressed="false" aria-expanded="false" aria-controls="fx">Effects</button>
+    <button class="btn fxbtn" id="fxBtn" aria-controls="drawer">Effects</button>
   </div>
 </div>
 
@@ -378,7 +392,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   function setMode(m,auto){
     mode=m; $("modeLabel").textContent=m==="tilt"?"Tilt":"Touch";
     $("modeBtn").textContent=m==="tilt"?"Use touch":"Use tilt";
-    $("axes").textContent=m==="tilt"?"Y tilt: pitch · X roll: volume · shake: vibrato":"Left–right: pitch · up–down: volume · wiggle: vibrato";
+    $("axes").textContent=m==="tilt"?"Tilt pitch · roll volume · shake vibrato":"Across pitch · up volume · wiggle vibrato";
     $("hint").textContent=m==="tilt"
       ? "Tilt the top of the phone toward you to drop the pitch, away to raise it. Roll right for louder, left to fade out. Shake for vibrato."
       : (auto?"Motion sensors aren't reaching this page, so it switched to touch. ":"")+"Drag across the scope: left to right is pitch, bottom to top is volume. Lift your finger to go silent.";
@@ -390,7 +404,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   $("power").addEventListener("click",async()=>{
     if(!ctx) buildAudio();
     if(!running){
-      await ctx.resume(); running=true; $("power").textContent="Stop"; $("power").classList.add("on");
+      await ctx.resume(); running=true; syncHint(); $("power").textContent="Stop"; $("power").classList.add("on");
       if(mode==="tilt") startMotion();
       holdWake();
     }else{
@@ -535,7 +549,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
       el.value=n; el.style.setProperty("--p",n+"%"); $("o_"+k).textContent=n; });
     [...$("routines").children].forEach(b=>b.setAttribute("aria-pressed",b.dataset.id===ds.routine));
     $("demoTag").classList.toggle("on",demoOn||metroOn);
-    $("hint").style.display=(demoOn||metroOn)?"none":"";
+    syncHint();
   }
 
   ROUTINES.forEach(r=>{
@@ -557,6 +571,9 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   $("demoLvl").addEventListener("input",e=>{ ds.demoLvl=e.target.value/100; store.set("demo",ds); syncDemo(); });
   $("clickLvl").addEventListener("input",e=>{ ds.clickLvl=e.target.value/100; store.set("demo",ds); syncDemo(); });
 
+  let played=false;
+  function syncHint(){ if(running||demoOn||metroOn) played=true; $("hint").style.display=played?"none":""; }
+
   // ---------- menu drawer ----------
   const drawer=$("drawer"), scrim=$("scrim");
   function setMenu(open){
@@ -569,6 +586,13 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   $("closeMenu").addEventListener("click",()=>setMenu(false));
   scrim.addEventListener("click",()=>setMenu(false));
   addEventListener("keydown",e=>{ if(e.key==="Escape"&&drawer.classList.contains("open")) setMenu(false); });
+  function setTab(t){
+    [...$("tabSeg").children].forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));
+    $("paneDemo").hidden=t!=="demo"; $("paneFx").hidden=t!=="fx"; store.set("tab",t);
+  }
+  $("tabSeg").addEventListener("click",e=>{ const b=e.target.closest("button"); if(b) setTab(b.dataset.t); });
+  $("menuBtn").addEventListener("click",()=>setTab(store.get("tab","demo")));
+  $("fxBtn").addEventListener("click",()=>{ setTab("fx"); setMenu(true); });
   syncDemo();
 
   // ---------- effects panel ----------
@@ -586,11 +610,6 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   }
   presetSeg.addEventListener("click",e=>{ const b=e.target.closest("button"); if(!b) return;
     Object.assign(fx,PRESETS[b.dataset.p]); syncFx(); applyFx(); store.set("fx",fx); });
-  function setFxOpen(open){
-    fxEl.classList.toggle("open",open); $("fxBtn").setAttribute("aria-pressed",open); $("fxBtn").setAttribute("aria-expanded",open);
-    store.set("fxOpen",open); size();
-  }
-  $("fxBtn").addEventListener("click",()=>setFxOpen(!fxEl.classList.contains("open")));
   syncFx();
 
   // ---------- scope ----------
@@ -611,7 +630,6 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
   }
   $("theme").addEventListener("click",()=>setTheme(document.documentElement.dataset.theme==="dark"?"light":"dark"));
   setTheme(store.get("theme","light"));
-  setFxOpen(store.get("fxOpen",false));
   function draw(){
     const w=cv.clientWidth, h=cv.clientHeight, Y=p=>h-p*(h-40)-20;
     // demo position right now, plus the beat for the dots
